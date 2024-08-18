@@ -44,3 +44,14 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
+
+
+
+LINKS FOR EXAMPLE
+
+https://github.com/fluid-player/fluid-player/blob/master/src/fluidplayer.js
+https://github.com/mediaelement/mediaelement-plugins/blob/master/src/playlist/playlist.js
+https://github.com/yumata/lampa-source/blob/main/src/interaction/player/video.js#L320
+https://github.com/openplayerjs/openplayerjs/blob/master/src/js/media/hls.ts#L4
+
+https://github.com/video-dev/hls.js
