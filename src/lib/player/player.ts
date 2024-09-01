@@ -1,19 +1,29 @@
-import { AVPlayer } from "./AVPlayer";
+// import { AVPlayer } from "./AVPlayer";
+import { EventBus, type EventCallback } from "./event-bus";
 import { HlsMedia } from "./HlsMedia";
+// import { BasePlayer } from "./InterfacePlayer";
 
 type TpyePlayer = "HLS" | "AVPlayer";
 
 export class Player {
-  player: HlsMedia | AVPlayer | undefined;
+  // player: HlsMedia | AVPlayer | undefined;
+  player: HlsMedia | undefined;
   type: TpyePlayer;
 
   container: HTMLDivElement;
   video: HTMLMediaElement | HTMLObjectElement | null = null;
+  eventBus: EventBus;
+
+  videoTracks: Array<any> | undefined = [];
+  aurdoTracks: Array<any> | undefined = [];
+  subtitleTracks: Array<any> | undefined = [];
 
   constructor(element: HTMLDivElement, url: string, type: TpyePlayer = "HLS") {
     this.container = element;
     this.type = type;
-    this._init(url);
+    this.eventBus = new EventBus();
+    this.init(url);
+    this.listeners();
   }
 
   _appenndVideoElemnt() {
@@ -29,15 +39,19 @@ export class Player {
     }
   }
 
-  _init(url: string) {
+  init(url: string) {
     switch (this.type) {
       case "HLS":
-        this.player = new HlsMedia(url);
+        this.player = new HlsMedia(url, this.eventBus);
+
+        // this.videoTracks = this.player.videoTrcks;
+        // this.aurdoTracks = this.player.audioTracks;
+        // this.subtitleTracks = this.player.subtitleTracks;
         this._appenndVideoElemnt();
         break;
       case "AVPlayer":
-        this.player = new AVPlayer(url);
-        this._appenndVideoElemnt();
+        // this.player = new AVPlayer(url);
+        // this._appenndVideoElemnt();
 
         break;
       default:
@@ -60,8 +74,42 @@ export class Player {
       this.player.togglePlay();
     }
   }
-  seekTo() {}
+  changeUrl(url: string) {
+    if (this.player) {
+      this.player.changeUr(url);
+    }
+  }
+  changeVideoLevel(level: number) {
+    if (this.player) {
+      this.player.changeVideoLevel(level);
+    }
+  }
+  changeAudioLevel(level: number) {
+    if (this.player) {
+      this.player.changeAudioLevel(level);
+    }
+  }
+  changeSubtitleLevel(level: number) {
+    if (this.player) {
+      this.player.changeSubtitleLevel(level);
+    }
+  }
+
+  seekTo(time: number) {
+    this.player?.seekTo(time);
+  }
+  on(event: string, callback: EventCallback) {
+    return this.eventBus.subscribe(event, callback);
+  }
+  onOnce(event: string, callback: EventCallback) {
+    return this.eventBus.subscribeOnce(event, callback);
+  }
+  off(event?: string) {
+    return this.eventBus.unsubscribeAll(event);
+  }
+
   listeners() {}
+
   destroy() {}
 }
 

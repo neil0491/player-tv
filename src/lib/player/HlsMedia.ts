@@ -1,5 +1,6 @@
-import Hls from "hls.js";
+import Hls, { Level, LevelParsed, MediaPlaylist } from "hls.js";
 import { BasePlayer } from "./InterfacePlayer";
+import { EventBus } from "./event-bus";
 
 export const hslSource = "https://webos.tvcom.uz/thirdparty/hls.min.js";
 
@@ -49,26 +50,49 @@ export class HlsMedia extends BasePlayer {
   video: HTMLVideoElement | null = null;
   hls: Hls | null = null;
 
-  constructor(url: string) {
+  eventBus: EventBus;
+
+  videoTrcks: Array<LevelParsed> | undefined = [];
+  audioTracks: MediaPlaylist[] | undefined = [];
+  subtitleTracks: Array<MediaPlaylist> | undefined = [];
+
+  constructor(url: string, eventBus: EventBus) {
     super();
     this.video = document.createElement("video");
     this.video.width = 800;
     this.video.height = (800 * 9) / 16;
     this.video.controls = true;
     this.video.id = "player";
-
-    if (Hls.isSupported()) {
-      this.destroy();
-      this.hls = new Hls();
-      //@ts-ignore
-      window.hls = this.hls;
-      this.hls.loadSource(url);
-      this.hls.attachMedia(this.video);
-    }
+    this.eventBus = eventBus;
+    this._init(url);
   }
 
   get VideoElement() {
     return this.video;
+  }
+
+  _init(url: string) {
+    if (Hls.isSupported()) {
+      this.destroy();
+      this.hls = new Hls();
+      this.hls.loadSource(url);
+      if (this.video) {
+        this.hls.attachMedia(this.video);
+      }
+      this.hls.on(Hls.Events.MANIFEST_LOADED, (event, data) => {
+        this.audioTracks = data?.audioTracks;
+        this.videoTrcks = data?.levels;
+        this.subtitleTracks = data?.subtitles;
+
+        this.eventBus.publish("audios", data?.audioTracks);
+        this.eventBus.publish("videos", data?.levels);
+        this.eventBus.publish("subtitles", data?.subtitles);
+      });
+    }
+  }
+
+  changeUr(url: string) {
+    this._init(url);
   }
 
   play() {
@@ -90,25 +114,49 @@ export class HlsMedia extends BasePlayer {
     }
   }
 
+  seekTo(time: number): void {
+    if (this.video) {
+      this.video.currentTime = this.video.currentTime + time;
+    }
+  }
+
+  changeVideoLevel(level: number): void {
+    if (!this.hls) {
+      return;
+    }
+    this.hls.currentLevel = level;
+  }
+
+  changeAudioLevel(level: number): void {
+    if (!this.hls) {
+      return;
+    }
+    this.hls.audioTrack = level;
+  }
+
+  changeSubtitleLevel(level: number): void {
+    if (!this.hls) {
+      return;
+    }
+    this.hls.subtitleTrack = level;
+  }
+
   destroy(): void {
     if (this.hls) {
       this.hls.stopLoad();
       this.hls.destroy();
       this.hls = null;
-      //@ts-ignore
-      window.hls = null;
-    }
-    //@ts-ignore
-    if (window.hls) {
-      //@ts-ignore
-      window.hls.stopLoad();
-      //@ts-ignore
-      window.hls.destroy();
-      //@ts-ignore
-      window.hls = null;
     }
   }
 
+  get audios(): any {
+    return this.audioTracks;
+  }
+  get videoTracks(): any {
+    return this.videoTracks;
+  }
+  get subtitles(): any {
+    return this.subtitleTracks;
+  }
   listeners(): void {}
-  seekTo(): void {}
 }

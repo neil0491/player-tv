@@ -1,6 +1,7 @@
 import { BasePlayer } from "./InterfacePlayer";
 
-export class AVPlayer extends BasePlayer {
+// export class AVPlayer extends BasePlayer {
+export class AVPlayer {
   playerStates = {
     IDLE: "IDLE",
     NONE: "NONE",
@@ -13,7 +14,7 @@ export class AVPlayer extends BasePlayer {
 
   video: HTMLObjectElement | null = null;
   constructor(url: string) {
-    super();
+    // super();
     this.video = document.createElement("object");
     this.video.id = "player";
     this.video.type = "application/avplayer";
@@ -69,6 +70,11 @@ export class AVPlayer extends BasePlayer {
       this.play();
     }
   }
+  changeUr(url: string) {
+    this.destroy();
+    // this._init(url);
+  }
+
   destroy(): void {}
   listeners(): void {}
   seekTo(): void {}
