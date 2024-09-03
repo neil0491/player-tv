@@ -1,13 +1,13 @@
-// import { AVPlayer } from "./AVPlayer";
+import { AVPlayer } from "./AVPlayer";
+import { EVENTS } from "./constants";
 import { EventBus, type EventCallback } from "./event-bus";
 import { HlsMedia } from "./HlsMedia";
-// import { BasePlayer } from "./InterfacePlayer";
 
 type TpyePlayer = "HLS" | "AVPlayer";
 
 export class Player {
-  // player: HlsMedia | AVPlayer | undefined;
-  player: HlsMedia | undefined;
+  player: HlsMedia | AVPlayer | undefined;
+  // player: HlsMedia | undefined;
   type: TpyePlayer;
 
   container: HTMLDivElement;
@@ -22,8 +22,7 @@ export class Player {
     this.container = element;
     this.type = type;
     this.eventBus = new EventBus();
-    this.init(url);
-    this.listeners();
+    this._init(url);
   }
 
   _appenndVideoElemnt() {
@@ -39,19 +38,15 @@ export class Player {
     }
   }
 
-  init(url: string) {
+  _init(url: string) {
     switch (this.type) {
       case "HLS":
         this.player = new HlsMedia(url, this.eventBus);
-
-        // this.videoTracks = this.player.videoTrcks;
-        // this.aurdoTracks = this.player.audioTracks;
-        // this.subtitleTracks = this.player.subtitleTracks;
         this._appenndVideoElemnt();
         break;
       case "AVPlayer":
-        // this.player = new AVPlayer(url);
-        // this._appenndVideoElemnt();
+        this.player = new AVPlayer(url);
+        this._appenndVideoElemnt();
 
         break;
       default:
@@ -98,19 +93,19 @@ export class Player {
   seekTo(time: number) {
     this.player?.seekTo(time);
   }
-  on(event: string, callback: EventCallback) {
+  on(event: EVENTS, callback: EventCallback) {
     return this.eventBus.subscribe(event, callback);
   }
-  onOnce(event: string, callback: EventCallback) {
+  onOnce(event: EVENTS, callback: EventCallback) {
     return this.eventBus.subscribeOnce(event, callback);
   }
-  off(event?: string) {
+  off(event?: EVENTS) {
     return this.eventBus.unsubscribeAll(event);
   }
 
-  listeners() {}
-
-  destroy() {}
+  destroy() {
+    this.player?.destroy();
+  }
 }
 
 // ПРИМЕР СОЗДАНИЯ

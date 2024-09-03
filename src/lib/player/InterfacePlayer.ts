@@ -5,6 +5,9 @@ export abstract class BasePlayer {
   abstract seekTo(number: number): void;
   abstract listeners(): void;
   abstract destroy(): void;
+  abstract changeVideoLevel(number: number): void;
+  abstract changeAudioLevel(number: number): void;
+  abstract changeSubtitleLevel(number: number): void;
   // abstract getAudios(): void;
   // abstract getVideos(): void;
   // abstract getSubtitles(): void;
