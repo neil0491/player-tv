@@ -1,7 +1,11 @@
+import { EVENTS } from "./constants";
+import { EventBus } from "./event-bus";
 import { BasePlayer } from "./InterfacePlayer";
-import { avplay } from 'tizen-tv-webapis';
+import { avplay, AVPlayPlaybackCallback } from "tizen-tv-webapis";
 
 export class AVPlayer extends BasePlayer {
+  eventBus: EventBus;
+
   // export class AVPlayer {
   playerStates = {
     IDLE: "IDLE",
@@ -13,22 +17,29 @@ export class AVPlayer extends BasePlayer {
   // avplay: any = webapis.avplay;
 
   video: HTMLObjectElement | null = null;
-  constructor(url: string) {
+  constructor(url: string, eventBus: EventBus) {
     super();
+    this.eventBus = eventBus;
     this.video = document.createElement("object");
     this.video.id = "player";
     this.video.type = "application/avplayer";
-    this._init(url);
+    if (avplay) {
+      this._init(url, this);
+    }
   }
 
   get VideoElement() {
     return this.video;
   }
 
+  getDuration() {
+    return avplay.getDuration();
+  }
+
   _prepareAndPlay() {
     avplay.prepareAsync(this.play, (e: any) => {
       console.log("Error Start Play", e);
-      alert("ERROR");
+      this.eventBus.publish(EVENTS.STATUS_PLAYER, false);
     });
 
     // // Init subtitles
@@ -37,44 +48,94 @@ export class AVPlayer extends BasePlayer {
     // }
   }
 
-  _init(url: string) {
+  _init(url: string, ctx: any): void {
     try {
-      webapis.avplay.open(url);
-      webapis.avplay.setDisplayRect(
-        0,
-        0,
-        window.innerWidth/2,
-        window.innerHeight/2
-      );
-      webapis.avplay.setDisplayMethod("PLAYER_DISPLAY_MODE_AUTO_ASPECT_RATIO");
+      avplay.open(url);
+      avplay.setDisplayRect(0, 0, window.innerWidth, window.innerHeight);
+      avplay.setDisplayMethod("PLAYER_DISPLAY_MODE_FULL_SCREEN");
+      const that = ctx;
+
+      const listeners = (): AVPlayPlaybackCallback => ({
+        onbufferingstart: function onbufferingstart() {
+          console.log("Buffering start.");
+          that.eventBus.publish(EVENTS.LOADING, true);
+        },
+        onbufferingprogress: function onbufferingprogress(percent) {
+          console.log("Buffering progress data : " + percent);
+        },
+        onbufferingcomplete: function onbufferingcomplete() {
+          console.log("Buffering complete.");
+          that.eventBus.publish(EVENTS.LOADING, false);
+
+          // videoDuration = videoDuration || webapis.avplay.getDuration();
+        },
+        oncurrentplaytime: function oncurrentplaytime(currentPlayTime) {
+          // console.log("Current playtime: " + currentPlayTime);
+          that.eventBus.publish(
+            EVENTS.PROGRESS_TIME,
+            currentPlayTime ? Math.floor(currentPlayTime / 1000) : 0
+          );
+          // currentTime = currentPlayTime;
+          // updateTime();
+        },
+        onevent: function onevent(eventType, eventData) {
+          console.log("event type: " + eventType + ", data: " + eventData);
+        },
+        onstreamcompleted: function onstreamcompleted() {
+          console.log("Stream Completed");
+          avplay.stop();
+        },
+        onerror: function onerror(eventType) {
+          console.error("event type error : " + eventType);
+        },
+        onsubtitlechange: function onsubtitlechange(duration, text) {
+          console.log("Subtitles running", duration, text);
+        },
+      });
+
+      avplay.setListener(listeners());
+
+      const totalTrack = avplay.getTotalTrackInfo();
+      for (var i = 0; i < totalTrack.length; i++) {
+        // console.log(totalTrack[i]);
+      }
     } catch (e) {}
   }
 
   play() {
     try {
-      switch (webapis.avplay.getState()) {
+      switch (avplay.getState()) {
         case this.playerStates.IDLE: // Fallthrough
         case this.playerStates.NONE:
           this._prepareAndPlay();
+          this.eventBus.publish(EVENTS.STATUS_PLAYER, true);
+
           break;
         case this.playerStates.READY: // Fallthrough
         case this.playerStates.PAUSED:
-          webapis.avplay.play();
+          avplay.play();
+          this.eventBus.publish(EVENTS.STATUS_PLAYER, true);
+
           break;
         default:
+          this.eventBus.publish(EVENTS.STATUS_PLAYER, false);
+
           break;
       }
-    } catch (error) {}
+    } catch (error) {
+      this.eventBus.publish(EVENTS.STATUS_PLAYER, false);
+    }
   }
 
   pause() {
-    var playerState = webapis.avplay.getState();
+    var playerState = avplay.getState();
 
     if (
       playerState === this.playerStates.PLAYING ||
       playerState === this.playerStates.READY
     ) {
-      webapis.avplay.pause();
+      this.eventBus.publish(EVENTS.STATUS_PLAYER, false);
+      avplay.pause();
     }
   }
 
@@ -87,16 +148,21 @@ export class AVPlayer extends BasePlayer {
   }
   changeUr(url: string) {
     this.destroy();
-    this._init(url);
+    this._init(url, this);
     // this._init(url);
   }
+
   changeAudioLevel(number: number): void {}
   changeSubtitleLevel(number: number): void {}
   changeVideoLevel(number: number): void {}
 
   destroy(): void {
-    webapis.avplay.close();
+    avplay.stop();
+    avplay.close();
+    // console.log(webapis.avplay.getState());
   }
   listeners(): void {}
-  seekTo(): void {}
+  seekTo(n: number): void {
+    avplay.seekTo(n * 1000);
+  }
 }

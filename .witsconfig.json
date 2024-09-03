@@ -1,0 +1,12 @@
+{
+  "connectionInfo": {
+    "deviceIp": "0.0.0.0",
+    "hostIp": "192.168.1.103",
+    "socketPort": 4420,
+    "width": "1920",
+    "isDebugMode": true
+  },
+  "profileInfo": {
+    "path": "C:/tizen-studio-data/profile/profiles.xml"
+  }
+}

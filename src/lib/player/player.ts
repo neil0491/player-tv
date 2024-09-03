@@ -2,6 +2,7 @@ import { AVPlayer } from "./AVPlayer";
 import { EVENTS } from "./constants";
 import { EventBus, type EventCallback } from "./event-bus";
 import { HlsMedia } from "./HlsMedia";
+// import { avplay } from "tizen-tv-webapis";
 
 type TpyePlayer = "HLS" | "AVPlayer";
 
@@ -25,6 +26,10 @@ export class Player {
     this._init(url);
   }
 
+  get duration() {
+    return this.player?.getDuration();
+  }
+
   _appenndVideoElemnt() {
     if (this.player) {
       this.video = this.player.VideoElement;
@@ -45,8 +50,10 @@ export class Player {
         this._appenndVideoElemnt();
         break;
       case "AVPlayer":
-        this.player = new AVPlayer(url);
-        this._appenndVideoElemnt();
+        if (window?.webapis) {
+          this.player = new AVPlayer(url, this.eventBus);
+          this._appenndVideoElemnt();
+        }
 
         break;
       default:
@@ -69,6 +76,7 @@ export class Player {
       this.player.togglePlay();
     }
   }
+
   changeUrl(url: string) {
     if (this.player) {
       this.player.changeUr(url);

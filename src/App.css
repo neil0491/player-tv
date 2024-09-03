@@ -1,5 +1,7 @@
 .App {
   text-align: center;
+  width: 1920px;
+  word-break: break-all;
 }
 
 .App-logo {
@@ -12,9 +14,18 @@
     animation: App-logo-spin infinite 20s linear;
   }
 }
-.focusable:focus{
+.focusable:focus {
   background-color: red;
 }
+#samsung_tizen_web_videoplayer {
+  position: fixed;
+  z-index: -16;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
 
 .App-header {
   background-color: #282c34;

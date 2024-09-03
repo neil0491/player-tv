@@ -6,4 +6,5 @@ export enum EVENTS {
   STATUS_PLAYER = "statusPlayer",
   PROGRESS_TIME = "progressTime",
   ERROR = "error",
+  LOADING = "loading"
 }

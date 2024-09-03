@@ -77,12 +77,13 @@ export class HlsMedia extends BasePlayer {
         this.hls.attachMedia(this.video);
         this.listeners();
       }
+      // this.hls.on(Hls.Events.)
       this.hls.on(Hls.Events.MANIFEST_LOADED, (event, data) => {
         this.hls?.startLoad(500);
         this.eventBus.publish(EVENTS.INFO, {
-          levels: data?.levels,
-          audios: data?.audioTracks,
-          subtitles: data?.subtitles,
+          levels: data?.levels || [],
+          audios: data?.audioTracks || [],
+          subtitles: data?.subtitles ? data.subtitles : [],
         });
         this.eventBus.publish(EVENTS.CURRENT_LEVEL, this.hls?.currentLevel);
         this.eventBus.publish(EVENTS.CURRENT_AUDIO, this.hls?.audioTrack);
@@ -128,6 +129,10 @@ export class HlsMedia extends BasePlayer {
     }
   }
 
+  getDuration(): number {
+    return this.video?.duration || 0;
+  }
+
   changeVideoLevel(level: number): void {
     if (!this.hls) {
       return;
@@ -168,8 +173,17 @@ export class HlsMedia extends BasePlayer {
     //@ts-ignore
     this.eventBus.publish(EVENTS.PROGRESS_TIME, e.target?.currentTime);
   }
+  setLoading(e: Event): void {
+    this.eventBus.publish(EVENTS.LOADING, true);
+  }
+
+  setLoaded(): void {
+    this.eventBus.publish(EVENTS.LOADING, false);
+  }
 
   listeners(): void {
+    this.video?.addEventListener("error", this.setLoaded.bind(this));
+    this.video?.addEventListener("waiting", this.setLoading.bind(this));
     this.video?.addEventListener("play", this.publishPlay.bind(this));
     this.video?.addEventListener("pause", this.publishPause.bind(this));
     this.video?.addEventListener(
@@ -179,6 +193,8 @@ export class HlsMedia extends BasePlayer {
   }
 
   removeListeners(): void {
+    this.video?.removeEventListener("error", this.setLoaded.bind(this));
+    this.video?.removeEventListener("waiting", this.setLoading.bind(this));
     this.video?.removeEventListener("play", this.publishPlay.bind(this));
     this.video?.removeEventListener("pause", this.publishPause.bind(this));
     this.video?.removeEventListener(

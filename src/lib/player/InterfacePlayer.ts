@@ -8,6 +8,7 @@ export abstract class BasePlayer {
   abstract changeVideoLevel(number: number): void;
   abstract changeAudioLevel(number: number): void;
   abstract changeSubtitleLevel(number: number): void;
+  abstract getDuration(): number;
   // abstract getAudios(): void;
   // abstract getVideos(): void;
   // abstract getSubtitles(): void;
